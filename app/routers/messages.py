@@ -9,7 +9,6 @@ from app.models import Message, User
 from app.schemas import MessageCreate, MessageResponse
 from app.logger import get_logger
 
-
 logger = get_logger(__name__)
 router = APIRouter(prefix="/messages", tags=["messages"])
 
@@ -20,6 +19,7 @@ def create_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # 1. Check receiver exists and is active (business logic)
     receiver = (
         db.query(User)
         .filter(User.id == message.receiver_id, User.is_active.is_(True))
@@ -28,6 +28,7 @@ def create_message(
     if not receiver:
         raise HTTPException(status_code=404, detail="Receiver not found")
 
+    # 2. Create and save message to DB
     new_message = Message(
         text=message.text,
         sender_id=current_user.id,
@@ -36,7 +37,11 @@ def create_message(
     db.add(new_message)
     db.commit()
     db.refresh(new_message)
+
+    # 3. Log the event
     logger.info("Message sent: from %s to %s", current_user.id, message.receiver_id)
+
+    # 4. Return created message
     return new_message
 
 
@@ -50,11 +55,14 @@ def get_inbox(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # 1. Filter messages where current user is the receiver
     query = db.query(Message).filter(Message.receiver_id == current_user.id)
 
+    # 2. Optionally filter by read status
     if unread_only is not None:
         query = query.filter(Message.is_read == (not unread_only))
 
+    # 3. Apply pagination and return results
     offset = (page - 1) * size
     messages = query.order_by(Message.id).offset(offset).limit(size).all()
     return messages
@@ -67,6 +75,8 @@ def get_outbox(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # 1. Filter messages where current user is the sender
+    # 2. Apply pagination and return results
     offset = (page - 1) * size
     messages = (
         db.query(Message)
@@ -79,12 +89,13 @@ def get_outbox(
     return messages
 
 
-@router.get("/{message_id}", response_model=MessageResponse)
-def get_message(
+@router.post("/{message_id}/read", response_model=MessageResponse)
+def read_message(
     message_id: int,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # 1. Find message that belongs to current user as receiver
     message = (
         db.query(Message)
         .filter(
@@ -96,9 +107,12 @@ def get_message(
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
 
+    # 2. Mark as read and persist (state change — POST action endpoint)
     message.is_read = True
     db.commit()
     db.refresh(message)
+
+    # 3. Return updated message
     return message
 
 
@@ -108,10 +122,12 @@ def delete_message(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    # 1. Find message by id
     message = db.query(Message).filter(Message.id == message_id).first()
     if not message:
         raise HTTPException(status_code=404, detail="Message not found")
 
+    # 2. Only sender can delete (business logic)
     if message.sender_id != current_user.id:
         logger.warning(
             "Unauthorized delete attempt: message_id=%s user=%s",
@@ -122,9 +138,11 @@ def delete_message(
             status_code=403, detail="Only the sender can delete this message"
         )
 
+    # 3. Only unread messages can be deleted (business logic)
     if message.is_read:
         raise HTTPException(status_code=400, detail="Cannot delete a read message")
 
+    # 4. Delete and log
     logger.info("Message deleted: id=%s by user=%s", message_id, current_user.id)
     db.delete(message)
     db.commit()

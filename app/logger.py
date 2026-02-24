@@ -4,6 +4,7 @@ import logging
 def get_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
 
+    # Guard against adding duplicate handlers if get_logger is called multiple times
     if not logger.handlers:
         logger.setLevel(logging.INFO)
 

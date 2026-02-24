@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from pydantic import BaseModel, field_validator, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 # --- User ---
@@ -33,12 +33,15 @@ class UserResponse(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    # from_attributes=True allows Pydantic to read data from SQLAlchemy model instances
     model_config = {"from_attributes": True}
 
 
 # --- Auth ---
 
 
+# AuthResponse returns both token and user data so the client doesn't need
+# a separate request to get user info after login/register
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
@@ -54,7 +57,7 @@ class LoginRequest(BaseModel):
 
 
 class MessageCreate(BaseModel):
-    text: str = Field(min_length=2, max_length=4096)
+    text: str = Field(min_length=1, max_length=4096)
     receiver_id: uuid.UUID
 
 

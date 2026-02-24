@@ -12,6 +12,7 @@ from app.db import Base
 class User(Base):
     __tablename__ = "users"
 
+    # UUID generated on Python side (not DB side) — ensures we know the ID before DB insert
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         primary_key=True,
@@ -25,6 +26,7 @@ class User(Base):
         server_default=func.now(),
         nullable=False,
     )
+    # onupdate=func.now() — automatically set to current time on every UPDATE
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
