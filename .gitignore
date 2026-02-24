@@ -1,0 +1,24 @@
+# Virtual environment
+.venv/
+venv/
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# PyCharm
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# own
+logs/
+PROJECT_NOTES.md
