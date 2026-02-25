@@ -2,13 +2,11 @@ import uuid
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi import HTTPException
 
 from app.services.user_service import UserService
 
 
 def make_service():
-    """Create UserService with mocked repository."""
     service = UserService(db=MagicMock())
     service.repo = MagicMock()
     return service
@@ -37,10 +35,10 @@ def test_register_username_taken():
     service = make_service()
     service.repo.exists_by_username.return_value = True
 
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(Exception) as exc_info:
         service.register(make_user_create())
 
-    assert exc_info.value.status_code == 400
+    assert "already exists" in str(exc_info.value)
 
 
 def test_register_success():
@@ -62,10 +60,10 @@ def test_login_user_not_found():
     service = make_service()
     service.repo.get_by_username.return_value = None
 
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises(Exception) as exc_info:
         service.login("dima", "Password1")
 
-    assert exc_info.value.status_code == 401
+    assert "Invalid username or password" in str(exc_info.value)
 
 
 def test_login_wrong_password():
@@ -73,10 +71,10 @@ def test_login_wrong_password():
     service.repo.get_by_username.return_value = make_db_user()
 
     with patch("app.services.user_service.verify_password", return_value=False):
-        with pytest.raises(HTTPException) as exc_info:
+        with pytest.raises(Exception) as exc_info:
             service.login("dima", "WrongPassword1")
 
-    assert exc_info.value.status_code == 401
+    assert "Invalid username or password" in str(exc_info.value)
 
 
 def test_login_success():
@@ -88,3 +86,39 @@ def test_login_success():
 
     assert result.access_token is not None
     assert result.user is not None
+
+
+# --- update_me ---
+
+
+def test_update_me_user_not_found():
+    service = make_service()
+    service.repo.get_by_id.return_value = None
+
+    with pytest.raises(Exception) as exc_info:
+        service.update_me(uuid.uuid4(), MagicMock(username="new_name"))
+
+    assert "User not found" in str(exc_info.value)
+
+
+# --- deactivate_me ---
+
+
+def test_deactivate_me_user_not_found():
+    service = make_service()
+    service.repo.get_by_id.return_value = None
+
+    with pytest.raises(Exception) as exc_info:
+        service.deactivate_me(uuid.uuid4())
+
+    assert "User not found" in str(exc_info.value)
+
+
+def test_deactivate_me_success():
+    service = make_service()
+    user = make_db_user()
+    service.repo.get_by_id.return_value = user
+
+    service.deactivate_me(user.id)
+
+    service.repo.deactivate.assert_called_once_with(user)

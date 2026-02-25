@@ -1,9 +1,7 @@
-from fastapi import APIRouter, Depends, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.auth import get_current_user
-from app.db import get_db
-from app.models import User
+from app.dependencies import get_current_user, get_user_service
+from app.exceptions import ConflictError, NotFoundError
 from app.schemas import AuthResponse, LoginRequest, UserCreate, UserResponse, UserUpdate
 from app.services.user_service import UserService
 
@@ -11,17 +9,23 @@ router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.post("/register", response_model=AuthResponse, status_code=201)
-def register(data: UserCreate, db: Session = Depends(get_db)):
-    return UserService(db).register(data)
+def register(data: UserCreate, service: UserService = Depends(get_user_service)):
+    try:
+        return service.register(data)
+    except ConflictError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 @router.post("/login", response_model=AuthResponse)
-def login(data: LoginRequest, db: Session = Depends(get_db)):
-    return UserService(db).login(data.username, data.password)
+def login(data: LoginRequest, service: UserService = Depends(get_user_service)):
+    try:
+        return service.login(data.username, data.password)
+    except NotFoundError as e:
+        raise HTTPException(status_code=401, detail=str(e))
 
 
 @router.get("/me", response_model=UserResponse)
-def get_me(current_user: User = Depends(get_current_user)):
+def get_me(current_user: UserResponse = Depends(get_current_user)):
     return current_user
 
 
@@ -30,24 +34,30 @@ def search_users(
     q: str = Query(min_length=1, description="Username (partial match) or user ID"),
     page: int = Query(default=1, ge=1, description="Page number"),
     size: int = Query(default=20, ge=1, le=100, description="Users per page"),
-    db: Session = Depends(get_db),
-    _current_user: User = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
+    _current_user: UserResponse = Depends(get_current_user),
 ):
-    return UserService(db).search(q, page, size)
+    return service.search(q, page, size)
 
 
 @router.patch("/me", response_model=UserResponse)
 def update_me(
     data: UserUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
+    current_user: UserResponse = Depends(get_current_user),
 ):
-    return UserService(db).update_me(current_user, data)
+    try:
+        return service.update_me(current_user.id, data)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))
 
 
 @router.delete("/me", status_code=204)
 def deactivate_me(
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    service: UserService = Depends(get_user_service),
+    current_user: UserResponse = Depends(get_current_user),
 ):
-    UserService(db).deactivate_me(current_user)
+    try:
+        service.deactivate_me(current_user.id)
+    except NotFoundError as e:
+        raise HTTPException(status_code=404, detail=str(e))

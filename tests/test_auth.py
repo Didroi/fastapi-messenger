@@ -1,4 +1,4 @@
-from app.auth import (
+from app.utils.security import (
     hash_password,
     verify_password,
     create_access_token,
@@ -22,7 +22,7 @@ def test_hash_password_not_equal_to_original():
 
 
 def test_hash_password_different_hashes_for_same_password():
-    # bcrypt генерирует разные хеши для одного пароля (соль)
+    # bcrypt generates different hashes for same password due to random salt
     assert hash_password("Password1") != hash_password("Password1")
 
 
@@ -53,7 +53,7 @@ def test_create_access_token_returns_string():
 
 
 def test_create_access_token_has_three_parts():
-    # JWT состоит из трёх частей разделённых точкой
+    # JWT consists of three parts separated by dots
     token = create_access_token(USER_ID)
     assert len(token.split(".")) == 3
 
