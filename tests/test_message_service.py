@@ -31,6 +31,7 @@ def make_message(sender_id=None, is_read=False):
 
 # --- create ---
 
+
 def test_create_receiver_not_found():
     service = make_service()
     service.user_repo.get_by_id.return_value = None
@@ -54,6 +55,7 @@ def test_create_receiver_inactive():
 
 
 # --- delete ---
+
 
 def test_delete_message_not_found():
     service = make_service()
@@ -100,6 +102,7 @@ def test_delete_success():
 
 
 # --- read_message ---
+
 
 def test_read_message_not_found():
     service = make_service()

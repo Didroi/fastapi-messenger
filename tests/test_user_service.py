@@ -32,6 +32,7 @@ def make_db_user(username="dima", password_hash="hashed"):
 
 # --- register ---
 
+
 def test_register_username_taken():
     service = make_service()
     service.repo.exists_by_username.return_value = True
@@ -55,6 +56,7 @@ def test_register_success():
 
 
 # --- login ---
+
 
 def test_login_user_not_found():
     service = make_service()
