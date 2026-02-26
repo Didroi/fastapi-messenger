@@ -91,10 +91,16 @@ Router → Service → Repository → Database
 
 ## Running Tests
 
-```bash
+### Unit tests
+
 # Run tests
 pytest tests/
 
 # Run with coverage
 pytest tests/ --cov=app --cov-report=term-missing
-```
+
+### Regression tests
+
+API regression suite built with Postman, covering all endpoints with real HTTP requests against a running instance.
+
+Repository: [postman-tests-fastapi-messenger](https://github.com/Didroi/postman-tests-fastapi-messenger)
