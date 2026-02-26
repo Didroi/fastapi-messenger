@@ -101,6 +101,19 @@ def test_update_me_user_not_found():
     assert "User not found" in str(exc_info.value)
 
 
+def test_update_me_success():
+    service = make_service()
+    user = make_db_user()
+    updated_user = make_db_user(username="new_name")
+    service.repo.get_by_id.return_value = user
+    service.repo.update_username.return_value = updated_user
+
+    result = service.update_me(user.id, MagicMock(username="new_name"))
+
+    service.repo.update_username.assert_called_once_with(user, "new_name")
+    assert result == updated_user
+
+
 # --- deactivate_me ---
 
 
@@ -122,3 +135,25 @@ def test_deactivate_me_success():
     service.deactivate_me(user.id)
 
     service.repo.deactivate.assert_called_once_with(user)
+
+
+# --- search ---
+
+
+def test_search_calls_repo_with_correct_offset():
+    service = make_service()
+    service.repo.search.return_value = []
+
+    service.search("dima", page=2, size=10)
+
+    service.repo.search.assert_called_once_with("dima", offset=10, limit=10)
+
+
+def test_search_returns_users():
+    service = make_service()
+    users = [make_db_user(), make_db_user()]
+    service.repo.search.return_value = users
+
+    result = service.search("dima", page=1, size=20)
+
+    assert result == users

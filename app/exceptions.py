@@ -8,3 +8,7 @@ class ForbiddenError(Exception):
 
 class ConflictError(Exception):
     pass
+
+
+class UnauthorizedError(Exception):
+    pass

@@ -27,6 +27,23 @@ def make_message(sender_id=None, is_read=False):
 # --- create ---
 
 
+def test_create_success():
+    service = make_service()
+    receiver = MagicMock()
+    receiver.is_active = True
+    service.user_repo.get_by_id.return_value = receiver
+    message = make_message()
+    service.repo.create.return_value = message
+
+    result = service.create(
+        MagicMock(receiver_id=uuid.uuid4(), text="hello"),
+        sender_id=make_user_id(),
+    )
+
+    service.repo.create.assert_called_once()
+    assert result == message
+
+
 def test_create_receiver_not_found():
     service = make_service()
     service.user_repo.get_by_id.return_value = None
@@ -47,6 +64,52 @@ def test_create_receiver_inactive():
         service.create(MagicMock(receiver_id=uuid.uuid4()), sender_id=make_user_id())
 
     assert "Receiver not found" in str(exc_info.value)
+
+
+# --- get_inbox ---
+
+
+def test_get_inbox_calls_repo_with_correct_offset():
+    service = make_service()
+    user_id = make_user_id()
+    service.repo.get_inbox.return_value = []
+
+    service.get_inbox(user_id, unread_only=None, page=2, size=20)
+
+    service.repo.get_inbox.assert_called_once_with(user_id, None, 20, 20)
+
+
+def test_get_inbox_returns_messages():
+    service = make_service()
+    messages = [make_message(), make_message()]
+    service.repo.get_inbox.return_value = messages
+
+    result = service.get_inbox(make_user_id(), unread_only=None, page=1, size=20)
+
+    assert result == messages
+
+
+# --- get_outbox ---
+
+
+def test_get_outbox_calls_repo_with_correct_offset():
+    service = make_service()
+    user_id = make_user_id()
+    service.repo.get_outbox.return_value = []
+
+    service.get_outbox(user_id, page=3, size=10)
+
+    service.repo.get_outbox.assert_called_once_with(user_id, 20, 10)
+
+
+def test_get_outbox_returns_messages():
+    service = make_service()
+    messages = [make_message()]
+    service.repo.get_outbox.return_value = messages
+
+    result = service.get_outbox(make_user_id(), page=1, size=20)
+
+    assert result == messages
 
 
 # --- delete ---

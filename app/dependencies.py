@@ -6,6 +6,7 @@ from app.db import get_db
 from app.schemas import UserResponse
 from app.services.message_service import MessageService
 from app.services.user_service import UserService
+from app.repositories.user_repository import UserRepository
 from app.utils.security import decode_access_token
 
 # HTTPBearer shows a simple token input in Swagger UI (unlike OAuth2PasswordBearer which shows username/password form)
@@ -20,13 +21,10 @@ def get_current_user(
     if not user_id:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
-    from app.models import User
-
-    user = db.query(User).filter(User.id == user_id, User.is_active.is_(True)).first()
+    user = UserRepository(db).get_active_by_id(user_id)
     if not user:
         raise HTTPException(status_code=401, detail="User not found or inactive")
 
-    # Return schema, not SQLAlchemy model — routers stay decoupled from models.py
     return UserResponse.model_validate(user)
 
 

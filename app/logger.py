@@ -13,12 +13,12 @@ def get_logger(name: str) -> logging.Logger:
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-        # в терминал
+        # stdout
         stream_handler = logging.StreamHandler()
         stream_handler.setFormatter(formatter)
         logger.addHandler(stream_handler)
 
-        # в файл
+        # file
         file_handler = logging.FileHandler("logs/app.log", encoding="utf-8")
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
