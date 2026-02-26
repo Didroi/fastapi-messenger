@@ -21,6 +21,14 @@ class UserRepository:
     def get_by_id(self, user_id: uuid.UUID) -> Optional[User]:
         return self.db.query(User).filter(User.id == user_id).first()
 
+    def get_active_by_id(self, user_id: uuid.UUID) -> Optional[User]:
+        # Separate method instead of active_only parameter — explicit business intent
+        return (
+            self.db.query(User)
+            .filter(User.id == user_id, User.is_active.is_(True))
+            .first()
+        )
+
     def exists_by_username(self, username: str) -> bool:
         return self.db.query(User).filter(User.username == username).first() is not None
 
