@@ -50,7 +50,10 @@ class UserService:
 
     def update_me(self, user_id: uuid.UUID, data: UserUpdate) -> User:
         user = self.get_by_id(user_id)
-        return self.repo.update_username(user, data.username.lower())
+        username = data.username.lower()
+        if self.repo.exists_by_username(username):
+            raise ConflictError("Username already exists")
+        return self.repo.update_username(user, username)
 
     def deactivate_me(self, user_id: uuid.UUID) -> None:
         user = self.get_by_id(user_id)
