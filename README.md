@@ -4,17 +4,17 @@ A pet project built to explore modern Python backend development. A REST API mes
 
 ## Tech Stack
 
-- **Python 3.13**
-- **FastAPI** — web framework
-- **PostgreSQL** — database
-- **SQLAlchemy** — ORM
-- **Alembic** — database migrations
-- **Pydantic** — data validation
-- **JWT** (python-jose) — authentication
-- **bcrypt** (passlib) — password hashing
-- **pytest** — unit testing
-- **Docker** — running PostgreSQL locally
-- **Ruff** — linter and formatter
+![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.129-009688?logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-database-336791?logo=postgresql&logoColor=white)
+![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0-red)
+![Alembic](https://img.shields.io/badge/Alembic-1.18-lightgrey)
+![Pydantic](https://img.shields.io/badge/Pydantic-2.12-E92063?logo=pydantic&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT-auth-orange?logo=jsonwebtokens&logoColor=white)
+![bcrypt](https://img.shields.io/badge/bcrypt-4.0-yellow)
+![pytest](https://img.shields.io/badge/pytest-9.0-green?logo=pytest&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)
+![Ruff](https://img.shields.io/badge/Ruff-0.15-purple)
 
 ## Setup
 
@@ -93,11 +93,13 @@ Router → Service → Repository → Database
 
 ### Unit tests
 
+```bash
 # Run tests
 pytest tests/
 
 # Run with coverage
 pytest tests/ --cov=app --cov-report=term-missing
+```
 
 ### Regression tests
 
