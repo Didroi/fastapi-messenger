@@ -29,3 +29,6 @@ jobs:
           SECRET_KEY: test-secret-key
           DATABASE_URL: postgresql://admin:secret@localhost:5432/messenger
         run: pytest tests/
+
+      - name: Build Docker image
+        run: docker compose build
