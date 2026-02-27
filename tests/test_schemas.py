@@ -1,6 +1,7 @@
 import pytest
 from pydantic import ValidationError
-from app.schemas import UserCreate
+from app.schemas import UserCreate, UserUpdate, MessageCreate
+import uuid
 
 
 # --- password_strength validator ---
@@ -35,6 +36,36 @@ def test_password_exactly_8_chars():
 
 
 def test_password_all_rules_fail():
-    # короткий, без цифры, без заглавной
     with pytest.raises(ValidationError):
         UserCreate(username="dima", password="pass")
+
+
+# --- UserUpdate ---
+
+
+def test_update_empty_username():
+    with pytest.raises(ValidationError):
+        UserUpdate(username="")
+
+
+def test_update_valid_username():
+    u = UserUpdate(username="dima")
+    assert u.username == "dima"
+
+
+# --- MessageCreate ---
+
+
+def test_message_empty_text():
+    with pytest.raises(ValidationError):
+        MessageCreate(text="", receiver_id=uuid.uuid4())
+
+
+def test_message_valid():
+    m = MessageCreate(text="hello", receiver_id=uuid.uuid4())
+    assert m.text == "hello"
+
+
+def test_message_too_long():
+    with pytest.raises(ValidationError):
+        MessageCreate(text="x" * 4097, receiver_id=uuid.uuid4())

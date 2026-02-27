@@ -91,6 +91,17 @@ def test_login_success():
 # --- update_me ---
 
 
+def test_update_me_username_taken():
+    service = make_service()
+    service.repo.get_by_id.return_value = make_db_user()
+    service.repo.exists_by_username.return_value = True
+
+    with pytest.raises(Exception) as exc_info:
+        service.update_me(uuid.uuid4(), MagicMock(username="taken"))
+
+    assert "already exists" in str(exc_info.value)
+
+
 def test_update_me_user_not_found():
     service = make_service()
     service.repo.get_by_id.return_value = None
@@ -106,6 +117,7 @@ def test_update_me_success():
     user = make_db_user()
     updated_user = make_db_user(username="new_name")
     service.repo.get_by_id.return_value = user
+    service.repo.exists_by_username.return_value = False  # добавить
     service.repo.update_username.return_value = updated_user
 
     result = service.update_me(user.id, MagicMock(username="new_name"))
