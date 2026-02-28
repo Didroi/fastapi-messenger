@@ -18,18 +18,22 @@ A pet project built to explore modern Python backend development. A REST API mes
 
 ## Setup
 
-1. Copy `.env.example` to `.env` and fill in your values
-2. Install dependencies: `pip install -r requirements.txt`
-3. Start database: `docker compose up -d`
-4. Apply migrations: `alembic upgrade head`
-5. Run the app: `uvicorn app.main:app --reload`
+### With Docker (recommended)
+1. Copy `.env.example` to `.env`
+2. `docker compose up --build`
 
 API docs available at `http://localhost:8000/docs`
+
+### Local development
+1. Copy `.env.example` to `.env`
+2. `pip install -r requirements.txt`
+3. `docker compose up -d db` — start database only
+4. `alembic upgrade head`
+5. `uvicorn app.main:app --reload`
 
 ## Architecture
 
 The project follows a layered architecture:
-
 ```
 Router → Service → Repository → Database
 ```
@@ -89,17 +93,24 @@ Router → Service → Repository → Database
 
 **UUID as user ID** — harder to enumerate than sequential integers, which adds a layer of security against ID-based scraping or unauthorized access attempts.
 
+**Paginated responses** — all list endpoints return `items`, `total`, `page`, `size`, `pages` instead of a plain array. This gives clients everything needed to build pagination UI without additional requests.
+
+**JWT access token without refresh** — token lifetime is set to 24 hours. Refresh token flow was deliberately omitted as out of scope for this project. In production, short-lived access tokens (15–60 min) with refresh tokens would be the standard approach.
+
 ## Running Tests
 
-### Unit tests
-
+### Unit & integration tests
 ```bash
-# Run tests
+# Run all tests
 pytest tests/
 
 # Run with coverage
 pytest tests/ --cov=app --cov-report=term-missing
 ```
+
+Tests include:
+- Unit tests for services (business logic with mocks)
+- Router tests via TestClient (HTTP status codes, auth, response schemas)
 
 ### Regression tests
 

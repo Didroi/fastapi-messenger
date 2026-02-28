@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, Query
 
 from app.models import Message
 
@@ -19,6 +19,17 @@ class MessageRepository:
         self.db.refresh(message)
         return message
 
+    def _inbox_query(
+        self, receiver_id: uuid.UUID, unread_only: Optional[bool]
+    ) -> Query:
+        query = self.db.query(Message).filter(Message.receiver_id == receiver_id)
+        if unread_only is not None:
+            if unread_only:
+                query = query.filter(Message.is_read.is_(False))
+            else:
+                query = query.filter(Message.is_read.is_(True))
+        return query
+
     def get_inbox(
         self,
         receiver_id: uuid.UUID,
@@ -26,10 +37,16 @@ class MessageRepository:
         offset: int,
         limit: int,
     ) -> list[Message]:
-        query = self.db.query(Message).filter(Message.receiver_id == receiver_id)
-        if unread_only is not None:
-            query = query.filter(Message.is_read == (not unread_only))
-        return query.order_by(Message.id).offset(offset).limit(limit).all()
+        return (
+            self._inbox_query(receiver_id, unread_only)
+            .order_by(Message.id)
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )
+
+    def count_inbox(self, receiver_id: uuid.UUID, unread_only: Optional[bool]) -> int:
+        return self._inbox_query(receiver_id, unread_only).count()
 
     def get_outbox(
         self, sender_id: uuid.UUID, offset: int, limit: int
@@ -42,6 +59,9 @@ class MessageRepository:
             .limit(limit)
             .all()
         )
+
+    def count_outbox(self, sender_id: uuid.UUID) -> int:
+        return self.db.query(Message).filter(Message.sender_id == sender_id).count()
 
     def get_by_id(self, message_id: int) -> Optional[Message]:
         return self.db.query(Message).filter(Message.id == message_id).first()

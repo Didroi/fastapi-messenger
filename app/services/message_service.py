@@ -1,3 +1,4 @@
+import math
 import uuid
 from typing import Optional
 
@@ -8,7 +9,7 @@ from app.logger import get_logger
 from app.models import Message
 from app.repositories.message_repository import MessageRepository
 from app.repositories.user_repository import UserRepository
-from app.schemas import MessageCreate
+from app.schemas import MessageCreate, PaginatedResponse
 
 logger = get_logger(__name__)
 
@@ -38,13 +39,31 @@ class MessageService:
         unread_only: Optional[bool],
         page: int,
         size: int,
-    ) -> list[Message]:
+    ) -> PaginatedResponse:
         offset = (page - 1) * size
-        return self.repo.get_inbox(receiver_id, unread_only, offset, size)
+        items = self.repo.get_inbox(receiver_id, unread_only, offset, size)
+        total = self.repo.count_inbox(receiver_id, unread_only)
+        return PaginatedResponse(
+            items=items,
+            total=total,
+            page=page,
+            size=size,
+            pages=math.ceil(total / size) if total > 0 else 1,
+        )
 
-    def get_outbox(self, sender_id: uuid.UUID, page: int, size: int) -> list[Message]:
+    def get_outbox(
+        self, sender_id: uuid.UUID, page: int, size: int
+    ) -> PaginatedResponse:
         offset = (page - 1) * size
-        return self.repo.get_outbox(sender_id, offset, size)
+        items = self.repo.get_outbox(sender_id, offset, size)
+        total = self.repo.count_outbox(sender_id)
+        return PaginatedResponse(
+            items=items,
+            total=total,
+            page=page,
+            size=size,
+            pages=math.ceil(total / size) if total > 0 else 1,
+        )
 
     def read_message(self, message_id: int, user_id: uuid.UUID) -> Message:
         message = self.repo.get_by_id_and_receiver(message_id, user_id)

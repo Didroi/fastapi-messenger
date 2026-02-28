@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from app.dependencies import get_current_user, get_message_service
-from app.schemas import MessageCreate, MessageResponse, UserResponse
+from app.schemas import MessageCreate, MessageResponse, UserResponse, PaginatedResponse
 from app.services.message_service import MessageService
 from app.utils.pagination import PaginationParams
 
@@ -19,7 +19,7 @@ def create_message(
     return service.create(data, current_user.id)
 
 
-@router.get("/inbox", response_model=list[MessageResponse])
+@router.get("/inbox", response_model=PaginatedResponse[MessageResponse])
 def get_inbox(
     pagination: PaginationParams = Depends(PaginationParams),
     unread_only: Optional[bool] = Query(
@@ -33,7 +33,7 @@ def get_inbox(
     )
 
 
-@router.get("/outbox", response_model=list[MessageResponse])
+@router.get("/outbox", response_model=PaginatedResponse[MessageResponse])
 def get_outbox(
     pagination: PaginationParams = Depends(PaginationParams),
     service: MessageService = Depends(get_message_service),

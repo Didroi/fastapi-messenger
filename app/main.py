@@ -40,6 +40,7 @@ def conflict_handler(request: Request, exc: ConflictError):
 
 
 @app.get("/health")
+# @app.get("/health", response_model=HealthResponse)
 def health(db: Session = Depends(get_db)):
     try:
         db.execute(text("SELECT 1"))

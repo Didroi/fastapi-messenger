@@ -155,6 +155,7 @@ def test_deactivate_me_success():
 def test_search_calls_repo_with_correct_offset():
     service = make_service()
     service.repo.search.return_value = []
+    service.repo.count_search.return_value = 0
 
     service.search("dima", page=2, size=10)
 
@@ -165,7 +166,13 @@ def test_search_returns_users():
     service = make_service()
     users = [make_db_user(), make_db_user()]
     service.repo.search.return_value = users
+    service.repo.count_search.return_value = 2
 
     result = service.search("dima", page=1, size=20)
 
-    assert result == users
+    assert result.items == users
+    assert result.total == 2
+    assert result.page == 1
+    assert result.size == 20
+    assert result.pages == 1
+    service.repo.count_search.assert_called_once_with("dima")
