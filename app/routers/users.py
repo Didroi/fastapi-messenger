@@ -1,7 +1,14 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.dependencies import get_current_user, get_user_service
-from app.schemas import AuthResponse, LoginRequest, UserCreate, UserResponse, UserUpdate
+from app.schemas import (
+    AuthResponse,
+    LoginRequest,
+    UserCreate,
+    UserResponse,
+    UserUpdate,
+    PaginatedResponse,
+)
 from app.services.user_service import UserService
 from app.utils.pagination import PaginationParams
 
@@ -23,7 +30,7 @@ def get_me(current_user: UserResponse = Depends(get_current_user)):
     return current_user
 
 
-@router.get("/search", response_model=list[UserResponse])
+@router.get("/search", response_model=PaginatedResponse[UserResponse])
 def search_users(
     q: str = Query(min_length=1, description="Username (partial match) or user ID"),
     pagination: PaginationParams = Depends(PaginationParams),

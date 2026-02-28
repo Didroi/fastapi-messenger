@@ -19,6 +19,12 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# own
+# Testing
+.coverage
+htmlcov/
+
+# Application
 logs/
+
+# Personal
 PROJECT_NOTES.md

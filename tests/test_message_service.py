@@ -73,6 +73,7 @@ def test_get_inbox_calls_repo_with_correct_offset():
     service = make_service()
     user_id = make_user_id()
     service.repo.get_inbox.return_value = []
+    service.repo.count_inbox.return_value = 0
 
     service.get_inbox(user_id, unread_only=None, page=2, size=20)
 
@@ -83,10 +84,16 @@ def test_get_inbox_returns_messages():
     service = make_service()
     messages = [make_message(), make_message()]
     service.repo.get_inbox.return_value = messages
+    service.repo.count_inbox.return_value = 2
 
     result = service.get_inbox(make_user_id(), unread_only=None, page=1, size=20)
 
-    assert result == messages
+    assert result.items == messages
+    assert result.total == 2
+    assert result.page == 1
+    assert result.size == 20
+    assert result.pages == 1
+    service.repo.count_inbox.assert_called_once()
 
 
 # --- get_outbox ---
@@ -96,6 +103,7 @@ def test_get_outbox_calls_repo_with_correct_offset():
     service = make_service()
     user_id = make_user_id()
     service.repo.get_outbox.return_value = []
+    service.repo.count_outbox.return_value = 0
 
     service.get_outbox(user_id, page=3, size=10)
 
@@ -106,10 +114,16 @@ def test_get_outbox_returns_messages():
     service = make_service()
     messages = [make_message()]
     service.repo.get_outbox.return_value = messages
+    service.repo.count_outbox.return_value = 1
 
     result = service.get_outbox(make_user_id(), page=1, size=20)
 
-    assert result == messages
+    assert result.items == messages
+    assert result.total == 1
+    assert result.page == 1
+    assert result.size == 20
+    assert result.pages == 1
+    service.repo.count_outbox.assert_called_once()
 
 
 # --- delete ---

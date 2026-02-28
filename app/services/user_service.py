@@ -1,4 +1,5 @@
 import uuid
+import math
 
 from sqlalchemy.orm import Session
 
@@ -6,7 +7,7 @@ from app.exceptions import ConflictError, NotFoundError, UnauthorizedError
 from app.logger import get_logger
 from app.models import User
 from app.repositories.user_repository import UserRepository
-from app.schemas import AuthResponse, UserCreate, UserUpdate
+from app.schemas import AuthResponse, UserCreate, UserUpdate, PaginatedResponse
 from app.utils.security import create_access_token, hash_password, verify_password
 
 logger = get_logger(__name__)
@@ -51,7 +52,7 @@ class UserService:
     def update_me(self, user_id: uuid.UUID, data: UserUpdate) -> User:
         user = self.get_by_id(user_id)
         username = data.username.lower()
-        if self.repo.exists_by_username(username):
+        if self.repo.exists_by_username(username, exclude_user_id=user_id):
             raise ConflictError("Username already exists")
         return self.repo.update_username(user, username)
 
@@ -59,6 +60,14 @@ class UserService:
         user = self.get_by_id(user_id)
         self.repo.deactivate(user)
 
-    def search(self, q: str, page: int, size: int) -> list[User]:
+    def search(self, q: str, page: int, size: int) -> PaginatedResponse:
         offset = (page - 1) * size
-        return self.repo.search(q, offset=offset, limit=size)
+        items = self.repo.search(q, offset=offset, limit=size)
+        total = self.repo.count_search(q)
+        return PaginatedResponse(
+            items=items,
+            total=total,
+            page=page,
+            size=size,
+            pages=math.ceil(total / size) if total > 0 else 1,
+        )

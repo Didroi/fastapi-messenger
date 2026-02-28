@@ -1,5 +1,6 @@
 import uuid
 from datetime import datetime
+from typing import Generic, TypeVar
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -71,3 +72,25 @@ class MessageResponse(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# --- Pagination ---
+
+
+T = TypeVar("T")
+
+
+class PaginatedResponse(BaseModel, Generic[T]):
+    items: list[T]
+    total: int
+    page: int
+    size: int
+    pages: int
+
+
+# --- HC ---
+
+
+class HealthResponse(BaseModel):
+    status: str
+    db: str
